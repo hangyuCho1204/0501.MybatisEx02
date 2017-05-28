@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.shopping.mapper.ShoppingMapper">
+	<resultMap type="com.shopping.dto.Product" id="ProductResult">
+		<id property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="price" column="price" />
+		<result property="description" column="description" />
+	</resultMap>
+
+	<resultMap type="com.shopping.dto.Customer" id="CustomerResult">
+		<id property="id" column="customer_id" />
+		<result property="name" column="name" />
+		<result property="address" column="address" />
+		<result property="email" column="email" />
+	</resultMap>
+	<!-- id : pk라고 생각하면 됨 property : Bean의 값 column : DB 컬럼의 값 -->
+	<select id="findByProductId" parameterType="int" resultMap="ProductResult">
+		Select * from product where product_id=#{id}
+	</select>
+
+	<select id="findByCustomerId" parameterType="int" resultMap="CustomerResult">
+		Select * from customer where customer_id=#{id}
+	</select>
+
+	<select id="findByOrderItemId" parameterType="int"
+		resultType="com.shopping.dto.OrderItem">
+		Select * from order_item where id=#{id}
+	</select>
+
+	<resultMap id="OrderItemResult" type="com.shopping.dto.OrderItem">
+		<id property="id" column="order_item_id" />
+		<result property="amount" column="amount" />
+		<result property="order_id" column="order_id" />
+		<association property="product" column="product_id" select="com.shopping.mapper.ShoppingMapper.findByProductId" />
+		<!-- 오터 아이템 하나에 프로덕트 객체 하나를 불러올 때 사용하는 태그 -->
+	</resultMap>
+
+	<select id="getJoin" parameterType="int" resultMap="OrderItemResult">
+		select * from
+		order_item where order_item_id = #{id}
+	</select>
+
+	<resultMap id="OrderResult" type="com.shopping.dto.Orders">
+		<id property="id" column="order_id" />
+		<result property="date" column="order_date" />
+		<association property="customer" column="customer_id"
+			select="com.shopping.mapper.ShoppingMapper.findByCustomerId" />
+	</resultMap>
+
+	<select id="findByOrderId" parameterType="int" resultMap="OrderResult">
+		select
+		order_id, to_char(order_date, 'yy/mm/dd') as order_date, customer_id
+		from orders where order_id = #{id}
+	</select>
+
+
+
+
+
+
+
+	<resultMap id="OrderResultList" type="com.shopping.dto.Orders">
+		<id property="id" column="order_id" />
+		<result property="date" column="order_date" />
+		<association property="customer" column="customer_id"
+			select="com.shopping.mapper.ShoppingMapper.findByCustomerId" />
+		<collection property="items" column="order_id"
+			select="com.shopping.mapper.ShoppingMapper.findByOrderIdFromOrderItem">
+		</collection>
+	</resultMap>
+
+	<!-- private int id; private String date; private Customer customer; private 
+		List<OrderItem> orderItem; -->
+	<!-- <collection property="items" column="order_id" select="com.shopping.mapper.ShoppingMapper.findByOrderIdFromOrderItem"/> -->
+
+	<select id="findByOrderIdItem" parameterType="int" resultMap="OrderResultList">
+		select order_id, to_char(order_date, 'yy/mm/dd') as order_date,
+		customer_id from orders where order_id = #{id}
+	</select>
+
+	<select id="findByOrderIdFromOrderItem" parameterType="int"
+		resultMap="OrderItemResult">
+		select *from order_item where order_id = #{id}
+	</select>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<select id="find" parameterType="Customer" resultType="Customer">
+		<bind name="name1" value="'%'||name||'%'"/>
+		<bind name="address1" value="'%'||address||'%'"/> 
+		<bind name="email1" value="'%'||email||'%'"/> 
+
+		select * from customer
+
+		<where>
+			<if test="name != null">
+				name like #{name}
+			</if>
+			<if test="address != null">
+				and address like #{address}
+			</if>
+			<if test="email != null">
+				and email like #{email}
+			</if>
+
+			<!-- <if test="name != ''"> and name like #{name} </if> <if test="address 
+				!= ''"> and address like #{address} </if> <if test="email != ''"> and email 
+				like #{email} </if> -->
+		</where>
+	</select>
+</mapper>
+
